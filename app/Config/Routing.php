@@ -46,9 +46,9 @@ class Routing extends BaseRouting
      * The default controller to use when no other controller has been
      * specified.
      *
-     * Default: 'Home'
+     * Default: 'HomeController'
      */
-    public string $defaultController = 'Home';
+    public string $defaultController = 'HomeController';
 
     /**
      * For Defined Routes and Auto Routing.

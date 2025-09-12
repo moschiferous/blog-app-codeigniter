@@ -5,6 +5,8 @@ namespace App\Controllers;
 use App\Models\User;
 use App\Libraries\JWTLibrary;
 use CodeIgniter\API\ResponseTrait;
+use CodeIgniter\HTTP\ResponseInterface;
+use ReflectionException;
 
 class AuthController extends BaseController
 {
@@ -20,7 +22,11 @@ class AuthController extends BaseController
         helper(['form', 'url']);
     }
 
-    public function register()
+    /**
+     * @return ResponseInterface
+     * @throws ReflectionException
+     */
+    public function register(): ResponseInterface
     {
         $rules = [
             'name' => 'required|min_length[3]|max_length[100]',
@@ -46,7 +52,10 @@ class AuthController extends BaseController
         ]);
     }
 
-    public function login()
+    /**
+     * @return ResponseInterface
+     */
+    public function login(): ResponseInterface
     {
         $rules = [
             'email' => 'required|valid_email',
@@ -71,7 +80,6 @@ class AuthController extends BaseController
             'email' => $user['email']
         ]);
 
-        // Simpan token ke database
         $this->userModel->updateToken($user['id'], $token);
 
         return $this->respond([
@@ -81,7 +89,10 @@ class AuthController extends BaseController
         ]);
     }
 
-    public function logout()
+    /**
+     * @return ResponseInterface
+     */
+    public function logout(): ResponseInterface
     {
         $token = $this->getBearerToken();
 
@@ -98,7 +109,25 @@ class AuthController extends BaseController
         ]);
     }
 
-    private function getBearerToken()
+    public function getLoggedInUser(): ResponseInterface
+    {
+        $token = $this->getBearerToken();
+        if ($token) {
+            $user = $this->userModel->getUserByToken($token);
+            if ($user) {
+                return $this->respond([
+                    'status' => 200,
+                    'user' => $user
+                ]);
+            }
+        }
+        return $this->failUnauthorized('Invalid token');
+    }
+
+    /**
+     * @return string|null
+     */
+    private function getBearerToken(): ?string
     {
         $header = $this->request->getHeaderLine('Authorization');
         if (!empty($header) && preg_match('/Bearer\s(\S+)/', $header, $matches)) {
